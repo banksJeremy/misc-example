@@ -7,10 +7,10 @@
   <script>(function() {
     'use strict';
 
-    var NOTEPAD_STORAGE_KEY = 'notepad-data';
+    const NOTEPAD_STORAGE_KEY = 'notepad-data';
 
-    document.addEventListener('DOMContentLoaded', function(event) {
-      var nodepad = document.querySelector('#notepad');
+    function main() {
+      const notepad = document.querySelector('#notepad');
 
       // Initialize notepad with existing value
       notepad.value = localStorage.getItem(NOTEPAD_STORAGE_KEY);
@@ -18,16 +18,16 @@
       notepad.disabled = false;
 
       // Save any changes to localStorage.
-      notepad.addEventListener('input', function(event) {
+      notepad.addEventListener('input', event => {
         localStorage.setItem(NOTEPAD_STORAGE_KEY, notepad.value);
       });
 
       // Update this page whenever the value is changed in another page
-      window.addEventListener('storage', function(event) {
+      window.addEventListener('storage', event => {
         if (event.key === NOTEPAD_STORAGE_KEY) {
           // Preserve cursor position
-          var selectionStart = notepad.selectionStart;
-          var selectionEnd = notepad.selectionEnd;
+          const selectionStart = notepad.selectionStart;
+          const selectionEnd = notepad.selectionEnd;
 
           notepad.value = event.newValue;
 
@@ -35,7 +35,9 @@
           notepad.selectionEnd = selectionEnd;
         }
       });
-    });
+    }
+    
+    document.addEventListener('DOMContentLoaded', event => main());
   }());</script>
 
   <style>
