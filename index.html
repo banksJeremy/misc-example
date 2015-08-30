@@ -7,11 +7,12 @@
   <script>(function() {
     'use strict';
 
+    // WARNING: It seems like the change event doesn't run properly through file://.
+
     const NOTEPAD_STORAGE_KEY = 'notepad-data';
 
-    let app;
     document.addEventListener('DOMContentLoaded', event => {
-      app = new App();
+      const app = new App();
     });
 
     const CONTENT_KEY = 'notepad-content';
@@ -23,8 +24,15 @@
 
         this.loadState();
 
+        // Save state to storage any time we know it changes...
         this.notepad.addEventListener('input', event => this.saveState());
         this.notepad.addEventListener('select', event => this.saveState());
+        // ...or at least might have.
+        this.notepad.addEventListener('click', event => this.saveState());
+        this.notepad.addEventListener('keyup', event => this.saveState());
+        this.notepad.addEventListener('keypress', event => this.saveState());
+
+        // Load state from storage any time it's updated elsewhere.
         window.addEventListener('storage', event => this.loadState())
       }
 
@@ -37,10 +45,13 @@
       }
 
       loadState() {
-        this.notepad.value = localStorage.getItem(CONTENT_KEY);
-        
+        let content = localStorage.getItem(CONTENT_KEY);
+        if (content != null) {
+          this.notepad.value = content;
+        }
+
         let selection = JSON.parse(localStorage.getItem(SELECTION_KEY));
-        if (selection) {
+        if (selection != null) {
           this.notepad.selectionStart = selection.start;
           this.notepad.selectionEnd = selection.end;
         }
