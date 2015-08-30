@@ -9,35 +9,43 @@
 
     const NOTEPAD_STORAGE_KEY = 'notepad-data';
 
-    function main() {
-      const notepad = document.querySelector('#notepad');
+    let app;
+    document.addEventListener('DOMContentLoaded', event => {
+      app = new App();
+    });
 
-      // Initialize notepad with existing value
-      notepad.value = localStorage.getItem(NOTEPAD_STORAGE_KEY);
-      // Then make it editable.
-      notepad.disabled = false;
+    const CONTENT_KEY = 'notepad-content';
+    const SELECTION_KEY = 'notepad-selection';
 
-      // Save any changes to localStorage.
-      notepad.addEventListener('input', event => {
-        localStorage.setItem(NOTEPAD_STORAGE_KEY, notepad.value);
-      });
+    class App {
+      constructor() {
+        this.notepad = document.querySelector('#notepad');
 
-      // Update this page whenever the value is changed in another page
-      window.addEventListener('storage', event => {
-        if (event.key === NOTEPAD_STORAGE_KEY) {
-          // Preserve cursor position
-          const selectionStart = notepad.selectionStart;
-          const selectionEnd = notepad.selectionEnd;
+        this.loadState();
 
-          notepad.value = event.newValue;
+        this.notepad.addEventListener('input', event => this.saveState());
+        this.notepad.addEventListener('select', event => this.saveState());
+        window.addEventListener('storage', event => this.loadState())
+      }
 
-          notepad.selectionStart = selectionStart;
-          notepad.selectionEnd = selectionEnd;
+      saveState() {
+        localStorage.setItem(CONTENT_KEY, this.notepad.value);
+        localStorage.setItem(SELECTION_KEY, JSON.stringify({
+          start: this.notepad.selectionStart,
+          end: this.notepad.selectionEnd
+        }));
+      }
+
+      loadState() {
+        this.notepad.value = localStorage.getItem(CONTENT_KEY);
+        
+        let selection = JSON.parse(localStorage.getItem(SELECTION_KEY));
+        if (selection) {
+          this.notepad.selectionStart = selection.start;
+          this.notepad.selectionEnd = selection.end;
         }
-      });
+      }
     }
-    
-    document.addEventListener('DOMContentLoaded', event => main());
   }());</script>
 
   <style>
@@ -73,6 +81,6 @@
     Synchronized Notepad
   </h1>
 
-  <textarea id="notepad" disabled="disabled"></textarea>
+  <textarea id="notepad"></textarea>
 </body>
 </html>
