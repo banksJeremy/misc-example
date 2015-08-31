@@ -11,25 +11,17 @@
  * });
  */
 const async = (generator) => () => {
+  const args = arguments
   return new Promise((resolve, reject) => {
-    const iterator = generator.apply(null, arguments);
-
-    let done_ = false;
-
-		async.do(() => runNext(undefined));
+    const iterator = generator.apply(null, args);
 
   	const runNext = (lastResult) => {
-  		if (done_) {
-  			throw new Error("Shouldn't ever be attempting to runNext after done.");
-  		}
-
   		try {
   			const next = iterator.next(lastResult);
 
   			if (next.done) {
   				resolve(next.value);
-  				done_ = true;
-          iterator = null;
+  	      iterator = null;
   			} else {
   				next.value.then((result) => {
   					runNext(result)
@@ -40,7 +32,9 @@ const async = (generator) => () => {
   		} catch (ex) {
   			reject(ex);
   		}
-  	}
+  	};
+
+    async.do(() => runNext(undefined));
   });
 }
 
