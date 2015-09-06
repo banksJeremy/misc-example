@@ -11,7 +11,7 @@
  * });
  */
 const async = (generator) => () => {
-  const args = arguments
+  const args = arguments;
   return new Promise((resolve, reject) => {
     const iterator = generator.apply(null, args);
 
@@ -19,14 +19,15 @@ const async = (generator) => () => {
   		try {
   			const next = iterator.next(lastResult);
 
+        // What if there's an error here?
   			if (next.done) {
   				resolve(next.value);
   	      iterator = null;
   			} else {
-  				next.value.then((result) => {
-  					runNext(result)
+  				Promise.resolve(next.value).then((result) => {
+  					async.do(() => runNext(result));
   				}, (error) => {
-  					reject(error);
+            iterator.throw(error);
   				});
   			}
   		} catch (ex) {
@@ -36,24 +37,25 @@ const async = (generator) => () => {
 
     async.do(() => runNext(undefined));
   });
-}
+};
+
 
 /**
  * Promise-calls a function in a microtask.
  * @param {function()} f
- * @return {Promise}
+ * @return {Promise} The value returned by the function.
  */
 async.do = (f) => Promise.resolve().then(() => f());
+
 
 /**
  * @param {duration} A duration in milliseconds.
  * @return {Promise} A promise that will resolve after duration has elasped.
  */
-async.waitForDuration = (duration) => {
-  return new Promise(resolve => {
-    setTimeout(resolve, duration);
-  })
-};
+async.waitForDuration = (duration) => new Promise(resolve => {
+  setTimeout(resolve, duration);
+});
+
 
 /**
  * @param {EventTarget} target The target where we're waiting for the event.
@@ -61,16 +63,16 @@ async.waitForDuration = (duration) => {
  * @return {Promise} A promise that will resolve with event instance the next
  *     time the named event fires on target.
  */
-async.waitForEvent = (target, eventName) => {
-  return new Promise(resolve => {
-    const listener = (event) => {
-      resolve(event);
-      target.removeEventListener(eventName, listener);
-    };
-    target.addEventListener(eventName, listener);
-  });
-};
+async.waitForEvent = (target, eventName) => new Promise(resolve => {
+  const listener = (event) => {
+    target.removeEventListener(eventName, listener);
+    resolve(event);
+  };
+  target.addEventListener(eventName, listener);
+});
+
 
 window.async = async;
+
 
 }());
